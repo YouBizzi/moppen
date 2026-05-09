@@ -1,0 +1,66 @@
+name: moppen_app
+description: "Een app vol humor en raadsels."
+publish_to: 'none'
+
+version: 1.0.1+101
+
+environment:
+  sdk: ^3.10.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # Reclames, links en delen
+  google_mobile_ads: ^5.1.0
+  url_launcher: ^6.3.0  
+  share_plus: ^10.1.0
+
+  # In-app aankopen en lokale opslag
+  in_app_purchase: ^3.2.0      # Voor de "Ads Verwijderen" knop
+  shared_preferences: ^2.3.2   # Voor aankoopstatus én onthouden getoonde moppen
+  app_tracking_transparency: 2.0.6+1
+
+  # Splashscreen (opstartscherm)
+  flutter_native_splash: ^2.4.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+  # Tool om icoontjes te genereren
+  flutter_launcher_icons: ^0.13.1
+
+# Configuratie voor het App Icoon
+flutter_launcher_icons:
+  android: true
+  ios: true
+  # 'image_path' is voor oude toestellen (zoals je Samsung S9)
+  image_path: "assets/icon/app_icon.png" 
+  # Adaptive Icon voor nieuwe toestellen (zoals je Pixel Pro 9)
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/icon/app_icon_new.png" # Je transparante 66% logo
+
+# Configuratie voor het Splashscreen
+flutter_native_splash:
+  color: "#6366F1"
+  image: assets/icon/splash_logo_white.png # Voor oudere Android versies
+  fullscreen: true
+  
+  android_12:
+    # Gebruik hier je foreground logo voor de juiste verhouding
+    image: assets/icon/app_icon_new.png 
+    color: "#6366F1"
+    icon_background_color: "#6366F1"
+
+  ios: true
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/jokes.json
+    - assets/icon/app_icon.png
+    - assets/icon/app_icon_new.png
+    - assets/icon/splash_logo_white.png
