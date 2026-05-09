@@ -240,7 +240,15 @@ class _MopSchermState extends State<MopScherm> {
 
   Future<void> _buyRemoveAds() async {
     final bool isAvailable = await _iap.isAvailable();
-    if (!isAvailable) return;
+    if (!isAvailable) {
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Aankopen niet beschikbaar op dit apparaat."),
+          ),
+        );
+      return;
+    }
     final response = await _iap.queryProductDetails({_productId});
     if (response.productDetails.isNotEmpty) {
       _iap.buyNonConsumable(
@@ -248,6 +256,13 @@ class _MopSchermState extends State<MopScherm> {
           productDetails: response.productDetails.first,
         ),
       );
+    } else {
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Product niet gevonden. Probeer later opnieuw."),
+          ),
+        );
     }
   }
 
