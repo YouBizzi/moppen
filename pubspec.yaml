@@ -2,7 +2,7 @@ name: moppen_app
 description: "Een app vol humor en raadsels."
 publish_to: 'none'
 
-version: 1.0.1+101
+version: 1.0.2+102
 
 environment:
   sdk: ^3.10.4
