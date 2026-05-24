@@ -114,7 +114,7 @@ class _MopSchermState extends State<MopScherm> {
     try {
       final prefs = await SharedPreferences.getInstance();
       _isAdsRemoved = prefs.getBool('ads_removed') ?? false;
-      if (Platform.isIOS) {
+      if (Platform.isIOS || Platform.isMacOS) {
         await AppTrackingTransparency.requestTrackingAuthorization();
       }
       _hasSeenFirstCycleDialog =
