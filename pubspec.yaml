@@ -58,7 +58,8 @@ flutter_native_splash:
 
 flutter:
   uses-material-design: true
-  disable-swift-package-manager: true
+  config:
+    disable-swift-package-manager: true
   assets:
     - assets/jokes.json
     - assets/icon/app_icon.png
