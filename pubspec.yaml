@@ -2,7 +2,7 @@ name: moppen_app
 description: "Een app vol humor en raadsels."
 publish_to: 'none'
 
-version: 1.0.2+104
+version: 1.0.3+105
 
 environment:
   sdk: ^3.10.4
@@ -58,6 +58,8 @@ flutter_native_splash:
 
 flutter:
   uses-material-design: true
+  config:
+    enable-swift-package-manager: false
   assets:
     - assets/jokes.json
     - assets/icon/app_icon.png
