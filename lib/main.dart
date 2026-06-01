@@ -569,11 +569,13 @@ class _MopSchermState extends State<MopScherm> {
                     color: Color(0xFF6366F1),
                     size: 28,
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     String tekst = huidigItem!['type'] == 'mop'
                         ? huidigItem!['tekst']
                         : "${huidigItem!['vraag']}\n\n${huidigItem!['antwoord']}";
-                    Share.share("$tekst\n\nLachen? Check de moppen.app 😂");
+                    await Share.shareWithResult(
+                      "$tekst\n\nLachen? Check de moppen.app 😂",
+                    );
                   },
                 ),
               ],

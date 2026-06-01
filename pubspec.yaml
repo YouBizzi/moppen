@@ -2,7 +2,7 @@ name: moppen_app
 description: "Een app vol humor en raadsels."
 publish_to: 'none'
 
-version: 1.0.2+103
+version: 1.0.2+104
 
 environment:
   sdk: ^3.10.4
@@ -15,7 +15,7 @@ dependencies:
   # Reclames, links en delen
   google_mobile_ads: ^5.1.0
   url_launcher: ^6.3.0  
-  share_plus: ^10.1.0
+  share_plus: ^10.1.4
 
   # In-app aankopen en lokale opslag
   in_app_purchase: ^3.2.0      # Voor de "Ads Verwijderen" knop
