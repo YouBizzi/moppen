@@ -573,9 +573,7 @@ class _MopSchermState extends State<MopScherm> {
                     String tekst = huidigItem!['type'] == 'mop'
                         ? huidigItem!['tekst']
                         : "${huidigItem!['vraag']}\n\n${huidigItem!['antwoord']}";
-                    await Share.shareWithResult(
-                      "$tekst\n\nLachen? Check de moppen.app 😂",
-                    );
+                    Share.share("$tekst\n\nLachen? Check de moppen.app 😂");
                   },
                 ),
               ],
