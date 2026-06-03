@@ -29,7 +29,6 @@ class MopApp extends StatelessWidget {
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFF8F9FA),
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6366F1)),
-        // Toegankelijkheid: Gebruik textTheme voor schaalbare tekst
         textTheme: const TextTheme(
           headlineMedium: TextStyle(
             fontSize: 24,
@@ -88,8 +87,7 @@ class _MopSchermState extends State<MopScherm> {
   int _sessionClicks = 0;
   bool _isAdsRemoved = false;
   int _interstitialRetryAttempts = 0;
-  bool _hasSeenFirstCycleDialog =
-      false; // NIEUW: Track of user de "100 moppen" dialog al heeft gezien
+  bool _hasSeenFirstCycleDialog = false;
 
   final InAppPurchase _iap = InAppPurchase.instance;
   late StreamSubscription<List<PurchaseDetails>> _subscription;
@@ -117,10 +115,8 @@ class _MopSchermState extends State<MopScherm> {
       if (Platform.isIOS || Platform.isMacOS) {
         await AppTrackingTransparency.requestTrackingAuthorization();
       }
-      _hasSeenFirstCycleDialog =
-          prefs.getBool('has_seen_first_cycle') ?? false; // NIEUW: Laad flag
+      _hasSeenFirstCycleDialog = prefs.getBool('has_seen_first_cycle') ?? false;
 
-      // IAP: Restore purchases op de achtergrond
       if (await _iap.isAvailable()) {
         await _iap.restorePurchases();
       }
@@ -132,13 +128,11 @@ class _MopSchermState extends State<MopScherm> {
       }
 
       final manager = JokeManager();
-      // AANGEPAST: Geef PRO status door aan init
       await manager.init(isProUser: _isAdsRemoved);
 
       if (mounted) {
         setState(() {
           _jokeManager = manager;
-          // AANGEPAST: Bij fresh start (index=0) gebruik getNextJoke, bij resume getCurrentJoke
           if (manager.currentIndex == 0) {
             huidigItem = _jokeManager!.getNextJoke();
           } else {
@@ -230,8 +224,6 @@ class _MopSchermState extends State<MopScherm> {
         _bannerAd?.dispose();
         _bannerAd = null;
         _isBannerLoaded = false;
-
-        // NIEUW: Re-shuffle naar alle 2,697 items na Pro upgrade
         _jokeManager?.refreshForProUpgrade();
         huidigItem = _jokeManager?.getNextJoke();
       });
@@ -266,6 +258,14 @@ class _MopSchermState extends State<MopScherm> {
     }
   }
 
+  Future<void> _restorePurchases() async {
+    if (mounted)
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Aankopen worden hersteld...")),
+      );
+    await _iap.restorePurchases();
+  }
+
   // --- LOGICA ---
   void volgendeItem() async {
     if (_jokeManager == null) return;
@@ -277,20 +277,15 @@ class _MopSchermState extends State<MopScherm> {
     });
 
     if (!_isAdsRemoved) {
-      // AANGEPAST: Eenmalige push wanneer user de 100e mop bereikt (totaal, niet per sessie)
       if (_jokeManager!.currentIndex == _gratisLimiet &&
           !_hasSeenFirstCycleDialog) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('has_seen_first_cycle', true);
         setState(() => _hasSeenFirstCycleDialog = true);
         _showEndReachedDialog();
-      }
-      // Reguliere promo's elke 10 items
-      else if (_sessionClicks % _promoInterval == 0) {
+      } else if (_sessionClicks % _promoInterval == 0) {
         _showPromoDialog();
-      }
-      // Interstitial ads elke 7 items
-      else if (_sessionClicks % _adInterval == 0 && _interstitialAd != null) {
+      } else if (_sessionClicks % _adInterval == 0 && _interstitialAd != null) {
         _interstitialAd!.show();
       }
     }
@@ -306,6 +301,13 @@ class _MopSchermState extends State<MopScherm> {
           "Je hebt alle gratis moppen gezien en keert nu terug naar het begin. Wil je doorgaan met 2600+ extra moppen zonder reclame? Slechts €2,99.",
         ),
         actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _restorePurchases();
+            },
+            child: const Text("Herstel aankopen"),
+          ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
@@ -325,7 +327,6 @@ class _MopSchermState extends State<MopScherm> {
   }
 
   void _showPromoDialog() {
-    // Varieer de boodschap op basis van hoeveel moppen ze al hebben gezien
     String title;
     String content;
 
@@ -350,6 +351,13 @@ class _MopSchermState extends State<MopScherm> {
         content: Text(content),
         actions: [
           TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _restorePurchases();
+            },
+            child: const Text("Herstel aankopen"),
+          ),
+          TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text("Later"),
           ),
@@ -372,7 +380,6 @@ class _MopSchermState extends State<MopScherm> {
         ? huidigItem!['tekst']
         : "Vraag: ${huidigItem!['vraag']}\nAntwoord: ${huidigItem!['antwoord']}";
 
-    // Handmatig encoderen om + tekens te vermijden
     final String subject = Uri.encodeComponent(
       'Mop rapporteren in de Moppen.app',
     );
@@ -426,11 +433,10 @@ class _MopSchermState extends State<MopScherm> {
     final int huidigeIndex = _jokeManager?.currentIndex ?? 0;
     final int totaalDatabase = _jokeManager?.totalCount ?? 0;
 
-    // AANGEPAST: Counter toont aantal geziene moppen (currentIndex)
     final int totaalTonen = _isAdsRemoved ? totaalDatabase : _gratisLimiet;
     final int toonIndex = _isAdsRemoved
-        ? huidigeIndex // PRO: direct het aantal
-        : ((huidigeIndex - 1) % _gratisLimiet) + 1; // FREE: cyclisch 1-100
+        ? huidigeIndex
+        : ((huidigeIndex - 1) % _gratisLimiet) + 1;
 
     bool isFavoriet = _jokeManager!.isFavoriet(huidigItem?['originalIndex']);
 
@@ -475,9 +481,17 @@ class _MopSchermState extends State<MopScherm> {
             },
           ),
           PopupMenuButton<String>(
-            onSelected: (v) => _meldMop(),
+            onSelected: (v) {
+              if (v == 'meld') _meldMop();
+              if (v == 'restore') _restorePurchases();
+            },
             itemBuilder: (c) => [
               const PopupMenuItem(value: 'meld', child: Text("Meld deze mop")),
+              if (!_isAdsRemoved)
+                const PopupMenuItem(
+                  value: 'restore',
+                  child: Text("Herstel aankopen"),
+                ),
             ],
           ),
         ],
@@ -677,7 +691,6 @@ class JokeManager {
   int get currentIndex => _currentIndex;
   int get totalCount => _allJokes.length;
 
-  // AANGEPAST: Init krijgt isProUser parameter + BOUNDS CHECK
   Future<void> init({bool isProUser = false}) async {
     final String response = await rootBundle.loadString('assets/jokes.json');
     _allJokes = json.decode(response);
@@ -685,13 +698,11 @@ class JokeManager {
 
     final List<String>? favoStrings = prefs.getStringList('favorieten');
     if (favoStrings != null) {
-      // NIEUW: Filter favorieten die buiten bereik zijn
       _favorieten = favoStrings
           .map(int.parse)
           .where((idx) => idx >= 0 && idx < _allJokes.length)
           .toList();
 
-      // Als er favorieten zijn verwijderd, save de gefilterde lijst
       if (_favorieten.length != favoStrings.length) {
         await prefs.setStringList(
           'favorieten',
@@ -703,9 +714,7 @@ class JokeManager {
     List<String>? savedOrder = prefs.getStringList('joke_order');
     _currentIndex = prefs.getInt('joke_index') ?? 0;
 
-    // NIEUW: Data versie check (voor schone migratie bij updates)
-    // Verhoog dit nummer bij breaking changes in shuffle logica
-    const int currentDataVersion = 2; // v2: 100 FREE + 2697 PRO systeem
+    const int currentDataVersion = 2;
     int savedDataVersion = prefs.getInt('data_version') ?? 1;
 
     bool dataVersionChanged = savedDataVersion < currentDataVersion;
@@ -713,12 +722,10 @@ class JokeManager {
       await prefs.setInt('data_version', currentDataVersion);
     }
 
-    // Check of saved order nog klopt met huidige status
     int expectedLength = isProUser ? _allJokes.length : 100;
     bool needsReset = false;
 
     if (savedOrder != null && savedOrder.length != expectedLength) {
-      // Oude data klopt niet met huidige PRO status
       needsReset = true;
     }
 
@@ -727,7 +734,6 @@ class JokeManager {
     } else {
       _shuffledIndices = savedOrder.map(int.parse).toList();
 
-      // EXTRA CHECK: Als currentIndex buiten bereik is, reset
       if (_currentIndex >= _shuffledIndices.length) {
         _currentIndex = 0;
         _saveToPrefs();
@@ -735,21 +741,17 @@ class JokeManager {
     }
   }
 
-  // AANGEPAST: _generateNewOrder krijgt isProUser parameter
   void _generateNewOrder({bool isProUser = false}) {
     if (isProUser) {
-      // PRO: Shuffle ALLE items (0 tot 2696)
       _shuffledIndices = List.generate(_allJokes.length, (index) => index)
         ..shuffle();
     } else {
-      // FREE: Shuffle alleen eerste 100 items (0 tot 99)
       _shuffledIndices = List.generate(100, (index) => index)..shuffle();
     }
     _currentIndex = 0;
     _saveToPrefs();
   }
 
-  // NIEUW: Methode voor Pro upgrade - re-shuffle naar alle items
   void refreshForProUpgrade() {
     _generateNewOrder(isProUser: true);
   }
@@ -768,26 +770,19 @@ class JokeManager {
   bool isFavoriet(int? idx) => _favorieten.contains(idx);
 
   List<Map<String, dynamic>> getFavorietenContent() {
-    return _favorieten
-        .where(
-          (idx) => idx >= 0 && idx < _allJokes.length,
-        ) // NIEUW: Extra safety check
-        .map((idx) {
-          var joke = Map<String, dynamic>.from(_allJokes[idx]);
-          joke['originalIndex'] = idx;
-          return joke;
-        })
-        .toList();
+    return _favorieten.where((idx) => idx >= 0 && idx < _allJokes.length).map((
+      idx,
+    ) {
+      var joke = Map<String, dynamic>.from(_allJokes[idx]);
+      joke['originalIndex'] = idx;
+      return joke;
+    }).toList();
   }
 
-  // AANGEPAST: getNextJoke met auto re-shuffle (cyclisch gedrag)
   Map<String, dynamic> getNextJoke() {
     if (_shuffledIndices.isEmpty) return {"type": "mop", "tekst": "Fout"};
 
-    // Bij einde: automatisch re-shuffle (cyclisch gedrag)
     if (_currentIndex >= _shuffledIndices.length) {
-      // Bepaal of dit een PRO user shuffle moet zijn
-      // (als we meer dan 100 items hebben geshuffled, zijn we PRO)
       bool shouldShuffleAll = _shuffledIndices.length > 100;
       _generateNewOrder(isProUser: shouldShuffleAll);
     }
@@ -799,12 +794,9 @@ class JokeManager {
     return joke;
   }
 
-  // NIEUW: Haal huidige mop op zonder counter te verhogen (voor app hervatten)
   Map<String, dynamic> getCurrentJoke() {
     if (_shuffledIndices.isEmpty) return {"type": "mop", "tekst": "Fout"};
 
-    // Bij resume: toon de laatst geziene mop (_currentIndex - 1)
-    // Bij fresh start (_currentIndex = 0): toon eerste mop (index 0)
     int indexToShow = _currentIndex > 0 ? _currentIndex - 1 : 0;
 
     if (indexToShow >= _shuffledIndices.length) {
@@ -813,7 +805,6 @@ class JokeManager {
       indexToShow = 0;
     }
 
-    // Haal mop op ZONDER increment
     int originalIdx = _shuffledIndices[indexToShow];
     var joke = Map<String, dynamic>.from(_allJokes[originalIdx]);
     joke['originalIndex'] = originalIdx;
