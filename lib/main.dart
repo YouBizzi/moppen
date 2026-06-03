@@ -10,7 +10,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app_tracking_transparency/app_tracking_transparency.dart'
-    if (dart.library.io) 'att_stub.dart';
+    if (dart.library.html) 'att_stub.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
