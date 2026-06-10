@@ -444,7 +444,17 @@ class _MopSchermState extends State<MopScherm> {
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(_isAdsRemoved ? Icons.stars : Icons.workspace_premium),
-          onPressed: _isAdsRemoved ? null : () => _buyRemoveAds(),
+          onPressed: () {
+            if (_isAdsRemoved) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Je hebt al Pro! Geniet van alle moppen. 🎉"),
+                ),
+              );
+            } else {
+              _buyRemoveAds();
+            }
+          },
         ),
         title: Column(
           children: [
