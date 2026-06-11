@@ -1,0 +1,38 @@
+name: iOS Screenshots
+
+on:
+  workflow_dispatch:
+
+jobs:
+  screenshots:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.9'
+          channel: 'stable'
+      
+      - name: Install dependencies
+        run: flutter pub get
+        
+      - name: Start Simulator
+        run: |
+          xcrun simctl boot "iPhone 16 Pro Max"
+          open -a Simulator
+          sleep 30
+          
+      - name: Build and install app
+        run: flutter install --debug
+        
+      - name: Take screenshots
+        run: |
+          sleep 10
+          xcrun simctl io booted screenshot screenshot1.png
+          
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v3
+        with:
+          name: ios-screenshots
+          path: "*.png"
