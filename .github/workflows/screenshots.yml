@@ -26,12 +26,14 @@ jobs:
       - name: Build and run app
         run: |
           flutter run -d "iPhone 16 Pro Max" &
-          sleep 30
-        
+          sleep 60
+          
       - name: Take screenshots
         run: |
           sleep 10
           xcrun simctl io booted screenshot screenshot1.png
+          sleep 5
+          xcrun simctl io booted screenshot screenshot2.png
           
       - name: Upload screenshots
         uses: actions/upload-artifact@v4
