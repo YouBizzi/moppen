@@ -23,8 +23,10 @@ jobs:
           open -a Simulator
           sleep 30
           
-      - name: Build and install app
-        run: flutter install --debug
+      - name: Build and run app
+        run: |
+          flutter run -d "iPhone 16 Pro Max" &
+          sleep 30
         
       - name: Take screenshots
         run: |
